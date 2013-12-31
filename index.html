@@ -1,0 +1,607 @@
+<html>
+<head>
+	<meta charset="utf-8"> 
+	<title>Santa The Zombie Slayer</title>
+	<script type="text/javascript" src="js/input.js"></script>
+</head>
+
+<body>
+	<script src="js/resources.js"></script>
+	<script type="text/javascript">
+
+		var requestAnimFrame = (function(){
+			return window.requestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function(callback){
+				window.setTimeout(callback, 1000 / 60);
+			}
+		})();
+
+		var canvas = document.createElement("canvas");
+		var ctx = canvas.getContext("2d");
+		var primaryCanvas = document.createElement("canvas");
+		var primaryCtx = primaryCanvas.getContext("2d");
+		
+		var spriteCanvas = document.createElement("canvas");
+		spriteCanvas.style.top = "600px";
+		spriteCanvas.style.left = "900px";
+		spriteCanvas.style.position = "absolute";
+		spriteCanvas.style.boxShadow = "0 0 16px 4px #222";
+		var spriteCanvasContext = spriteCanvas.getContext("2d");
+
+		var debugData = ["<b>Debug</b>: "];
+		var debugInfo = document.createElement("div");
+		debugInfo.style.width = "400px";
+		debugInfo.style.height = "400px";
+		debugInfo.style.boxShadow = "inset 0 0 16px 4px #111";
+		debugInfo.style.left = "900px";
+		debugInfo.style.top = "23px";
+		debugInfo.style.padding = "10px";
+		debugInfo.style.backgroundColor = "#9f9f9f";
+		debugInfo.style.position = "absolute";
+		document.body.style.backgroundColor = "#666";
+
+		canvas.width = 800;
+		canvas.height = 800;
+
+		primaryCanvas.width = canvas.width;
+		primaryCanvas.height = canvas.height;
+		primaryCanvas.style.boxShadow = "0 0 16px 10px #222";
+
+		document.body.appendChild(primaryCanvas);
+		document.body.appendChild(debugInfo);
+		document.body.appendChild(spriteCanvas);
+
+		ctx.fillStyle="rgb(0, 0, 0)";
+		ctx.fillRect(0, 0, 800, 600);
+
+		var now = Date.now();
+		var lastTime = now;
+		var delta;
+		var x = 0;
+
+		var widthUnit = canvas.width / 100;
+		var heightUnit = canvas.height / 100;
+
+		resources.load("img/santa.png");
+		resources.onReady(start);
+
+		function SpriteSheet(url)
+		{
+			this.url = url;
+
+			this.width = resources.get(this.url).width;
+			this.height = resources.get(this.url).height;
+
+			this.getSpriteWidthHeight = function(numSpritesHorizontal, numSpritesVertical)
+			{
+				var wh = [];
+
+				var w = this.width / numSpritesHorizontal;
+				var h = this.height / numSpritesVertical;
+
+				wh[0] = w;
+				wh[1] = h;
+
+				return wh;
+			}
+
+			this.getSpriteXY = function(frame, spriteWidth, spriteHeight, spriteOffsetX, spriteOffsetY)
+			{
+
+				var xy = [];
+
+				var img = resources.get(this.url);
+				var widthSprites = (this.width / spriteWidth);
+				y = Math.floor(frame / widthSprites);
+				x = frame - (widthSprites * y);
+
+				x = (x * spriteWidth) + spriteOffsetX;
+				y = (y * spriteHeight) + spriteOffsetY;
+
+				xy[0] = x;
+				xy[1] = y;
+
+				return xy;
+			}
+
+			this.render = function(x, y, width, height, spriteX, spriteY, spriteWidth, spriteHeight, context)
+			{
+				var context = (typeof context === "undefined") ? ctx : context;
+				context.drawImage(resources.get(this.url), spriteX, spriteY, spriteWidth, spriteHeight, x * widthUnit, y * heightUnit, width * widthUnit, height * heightUnit);
+			}
+		}
+
+		function range(first, last) {
+			this.first = first;
+			this.last = last;
+		}
+
+		function Sprite(spriteSheet, x, y, width, height, spriteOffsetX, spriteOffsetY, firstFrame, lastFrame, framesPerSecond)
+		{
+			this.spriteSheet = spriteSheet;
+			
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+			this.firstFrame = firstFrame;
+			this.lastFrame = lastFrame;
+			this.framesPerSecond = framesPerSecond;
+			this.swapFramesOnUpdate = true;
+			this.currentFrame = firstFrame;
+			
+			this.spriteOffsetX = spriteOffsetX;
+			this.spriteOffsetY = spriteOffsetY;
+
+			this.lastFrameChange = 0;
+
+			this.nextFrame = function()
+			{
+				this.currentFrame++;
+
+				if (this.currentFrame > this.lastFrame)
+				{
+					this.currentFrame = this.firstFrame;
+				}
+			}
+
+			this.setFrame = function(frame)
+			{
+				this.currentFrame = frame;
+			}
+
+			this.getXY = function() {
+				return spriteSheet.getSpriteXY(this.currentFrame, this.width, this.height, this.spriteOffsetX, this.spriteOffsetY);
+			}
+
+			this.render = function(x, y, width, height, context)
+			{
+				var xy = this.getXY();
+				spriteSheet.render(x, y, width, height, xy[0], xy[1], this.width, this.height, context);
+			}
+
+			this.update = function()
+			{
+				if (this.swapFramesOnUpdate)
+				{
+					if (now - this.lastFrameChange > 1000 / this.framesPerSecond)
+					{
+						this.nextFrame();
+						this.lastFrameChange = now;
+					}
+				}
+			}
+
+			this.
+		}
+
+		function TileMap()
+		{ 
+			this.data = [
+			[0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+			[0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+			[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+			[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+			];
+
+			this.get = function(x, y)
+			{
+				return this.data[y][x];
+			}
+
+			this.numTiles = function() {
+				var length = 0;
+				
+				for (var i = 0; i < this.data.length; i++)
+				{
+					length += this.data[i].length;
+				}
+
+				return length;
+			}
+
+			this.rectHeight = function() {
+				return Math.floor(canvas.height / map0.data.length);
+			}
+
+			this.rectWidth = function(row) {
+				var row = (isNaN(row)) ? 0 : row;
+				return Math.floor(canvas.width / this.data[row].length);
+			}
+
+			this.render = function() {
+				var rectHeight = this.rectHeight();
+
+				for (var y = 0; y < this.data.length; y++) {
+					var rectWidth = this.rectWidth(y);
+					for (var x = 0; x < this.data[y].length; x++) {
+						if (map0.get(x, y) != 0)
+						{
+							ctx.fillRect(rectWidth * x, rectHeight * y, rectWidth, rectHeight);
+						}
+					}
+				}
+			}
+
+			this.getBoundingBox = function(x, y) {
+				var width = this.rectWidth(y) / widthUnit;
+				var height = this.rectHeight() / heightUnit;
+				var xPos = width * x;
+				var yPos = height * y;
+				return new boundingBox(xPos, yPos, xPos + width, yPos + height);
+			}
+
+		} 
+
+		function boundingBox(x1, y1, x2, y2) {
+			this.x1 = x1;
+			this.y1 = y1;
+			this.x2 = x2;
+			this.y2 = y2;
+
+			this.draw = function() {
+				ctx.strokeRect(this.x1 * widthUnit, this.y1 * heightUnit, (this.x2-this.x1) * widthUnit, (this.y2-this.y1) * heightUnit);
+			}
+		}
+
+		function vec2(x, y) {
+			this.x = x;
+			this.y = y;
+
+			this.length = function() {
+				return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+			}
+
+			this.add = function(vector) {
+				return new vec2(this.x + vector.x, this.y + vector.y);
+			}
+
+			this.addXY = function(x, y) {
+				return new vec2(this.x + x, this.y + y);
+			}
+
+			this.substract = function(vector) {
+				return new vec2(this.x - vector.x, this.y - vector.y);
+			}
+
+			this.substractXY = function(x, y) {
+				return new vec2(this.x - x, this.y - y);
+			}
+
+			this.multiply = function(vector) {
+				return new vec2(this.x * vector.x, this.y * vector.y);	
+			}
+
+			this.multiplyXY = function(x, y) {
+				return new vec2(this.x * x, this.y * y);	
+			}
+
+			this.divide = function(vector) {
+				return new vec2(this.x / vector.x, this.y / vector.y)
+			}
+
+			this.divideXY = function(x, y) {
+				return new vec2(this.x / x, this.y / y)
+			}
+
+			this.normalize = function() {
+				var length = this.length();
+				return new vec2(this.x / length, this.y / length);
+			}
+		}
+
+		function Entity(x, y, width, height, sprite)
+		{
+			this.position = new vec2(x, y)
+			this.width = width;
+			this.height = height;
+			this.sprite = sprite;
+
+			this.boundingBox = new boundingBox(this.position.x, this.position.y, this.position.x + this.width, this.position.y + this.width);
+			this.previousOffsets = [];
+			this.previousOffsets[0] = new vec2(0, 0);
+			this.previousOffsets[1] = new vec2(0, 0);
+
+			this.render = function() {
+				this.sprite.render(this.position.x, this.position.y, this.width, this.height);
+			}
+
+			this.update = function() {
+				this.applyTranslation();
+				this.sprite.update();
+				this.updateBoundingBox();
+			}
+
+			this.updateBoundingBox = function() {
+				var offsets = this.getBoundingBoxOffsets();
+
+				this.boundingBox.x1 = this.position.x + offsets[0].x;
+				this.boundingBox.y1 = this.position.y + offsets[0].y;
+
+				this.boundingBox.x2 = this.position.x + this.width - offsets[1].x;
+				this.boundingBox.y2 = this.position.y + this.height - offsets[1].y;
+			}
+
+			this.getBoundingBoxOffsets = function() {
+				spriteCanvasContext.width = this.width * widthUnit;
+				spriteCanvasContext.height = this.height * widthUnit;
+				spriteCanvas.height = this.height * heightUnit;
+				spriteCanvas.width = this.width * widthUnit;
+				spriteCanvasContext.fillRect(0, 0, this.width * widthUnit, this.height * heightUnit);
+				this.sprite.render(0, 0, this.width, this.height, spriteCanvasContext);
+
+				var center = new vec2(this.width/2 * widthUnit, this.height/2 * heightUnit);
+				var img = spriteCanvasContext.getImageData(0, 0, spriteCanvasContext.width, spriteCanvasContext.height);
+
+				var x1 = center.x;
+				var y1 = center.y;
+				var y2 = center.y;
+				var x2 = center.x;
+
+				for (var i = 0; i < img.data.length; i+=4) {
+					var x, y;
+
+					var red = img.data[i];
+					var green = img.data[i+1];
+					var blue = img.data[i+2];
+					iPos = i / 4;
+
+					if (red < 6 && green < 6 && blue < 6) {
+						img.data[i] = 0;
+						img.data[i+1] = 255;
+						img.data[i+2] = 0;
+					}
+
+					else {
+						y = Math.floor(iPos / img.width);
+						x = iPos - (img.width * y);
+
+						if (x > x2) {
+							x2 = x;
+						}
+						if (x < x1) {
+							x1 = x;
+						}
+						if (y < y1) {
+							y1 = y;
+						}
+						if (y > y2) {
+							y2 = y;
+						}
+					}
+				}
+
+				spriteCanvasContext.fillRect(0, 0, this.width * widthUnit, this.height * heightUnit);
+				spriteCanvasContext.putImageData(img, 0, 0);
+
+				spriteCanvasContext.strokeStyle = "rgb(255,255,255)";
+				spriteCanvasContext.strokeRect(x1, y1, x2-x1, y2-y1);
+
+				var offsets = [];
+				x1 /= widthUnit;
+				x2 /= widthUnit;
+				y1 /= widthUnit;
+				y2 /= widthUnit;
+				offsets[0] = new vec2(x1, y1);
+				offsets[1] = new vec2(this.width - x2, this.height - y2);
+				lastOffset = offsets[0].x;
+				return offsets;
+			}
+
+			this.applyTranslation = function() {
+				this.position = this.position.add(this.translationVector);
+				this.translationVector = new vec2(0, 0);
+			}
+
+			this.translate = function(translationVector) {
+				this.translationVector = this.translationVector.add(translationVector);
+			}
+
+			this.translationVector = new vec2(0, 0);
+		}
+
+		function getColissionVector(objectBoundingBox, movementVector, coliderBoundingBox) {
+			var colVector = new vec2(0, 0);
+
+			if (objectBoundingBox.x1 + movementVector.x < coliderBoundingBox.x2 &&
+				objectBoundingBox.y1 + movementVector.y < coliderBoundingBox.y2 &&
+				objectBoundingBox.x2 + movementVector.x > coliderBoundingBox.x1 &&
+				objectBoundingBox.y2 + movementVector.y > coliderBoundingBox.y1)
+			{
+				var intersectionX = 0;
+				var intersectionY = 0;
+
+				if (movementVector.x > 0) {
+					intersectionX = objectBoundingBox.x2 + movementVector.x - coliderBoundingBox.x1;
+				}
+				else if (movementVector.x < 0) {
+					intersectionX = objectBoundingBox.x1 + movementVector.x - coliderBoundingBox.x2; 
+				}
+
+				if (movementVector.y > 0) {
+					intersectionY = objectBoundingBox.y2 + movementVector.y - coliderBoundingBox.y1;
+				}
+				else if (movementVector.y < 0) {
+					intersectionY = objectBoundingBox.y1 + movementVector.y - coliderBoundingBox.y2; 
+				}
+
+				if (intersectionY == 0) {
+					colVector.x = intersectionX;
+				}
+				else if (intersectionX == 0) {
+					colVector.y = intersectionY;
+				}
+
+				if (Math.abs(intersectionX) <= Math.abs(intersectionY)) {
+					colVector.x = intersectionX;
+				}
+				else {
+					colVector.y = intersectionY;
+				}
+			}
+
+			return colVector;
+		}
+
+		function checkInput()
+		{
+			if (input.isDown("LEFT")) {
+				santa.moveLeft();
+			}
+
+			if (input.isDown("RIGHT")) {
+				santa.moveRight();
+			}
+
+			if (input.isDown("UP")) {
+				santa.moveUp();
+			}
+
+			if (input.isDown("DOWN")) {
+				santa.moveDown();
+			}
+		}
+
+		function log(text) {
+			debugData.push(text);
+		}
+
+		var FPS, lastFPS, currentFrames;
+
+		function start()
+		{
+			santaSprite = new Sprite(new SpriteSheet("img/santa.png"), 0, 0, 150, 150, 0, 0, 0, 15, 12);
+			santa = new Entity(0, 0, 16, 16, santaSprite);		
+			santa2 = new Entity(32, 32, 16, 16, santaSprite);
+			santa.speed = 100;
+
+			santa.applyTranslation = function() {
+
+				log("santa.position: " + santa.position.x.toFixed(2) + ", " + santa.position.y.toFixed(2));
+
+				this.position = this.position.add(this.translationVector);
+
+				var colissionVector = getColissionVector(this.boundingBox, this.translationVector, santa2.boundingBox);
+				for (var y = 0; y < map0.data.length; y++) {
+					var rectWidth = map0.rectWidth(y);
+					for (var x = 0; x < map0.data[y].length; x++) {
+						if (map0.get(x, y) != 0)
+						{
+							var tileBoundingBox = map0.getBoundingBox(x, y);
+							colissionWithThis = getColissionVector(this.boundingBox, this.translationVector, tileBoundingBox);
+							
+							if (Math.abs(colissionWithThis.x) > Math.abs(colissionVector.x)) {
+								colissionVector.x = colissionWithThis.x;
+							}
+							if (Math.abs(colissionWithThis.y) > Math.abs(colissionVector.y)) {
+								colissionVector.y = colissionWithThis.y;
+							}
+						}
+					}
+				}
+
+				this.position = this.position.substract(colissionVector);
+				this.translationVector = new vec2(0, 0);
+			}
+
+			santa.moveLeft = function() {
+				this.translate(new vec2(-this.speed * delta, 0));
+			}
+
+			santa.moveRight = function() {
+				this.translate(new vec2(this.speed * delta, 0));
+			}
+
+			santa.moveUp = function() {
+				this.translate(new vec2(0, -this.speed * delta));
+			}
+
+			santa.moveDown = function() {
+				this.translate(new vec2(0, this.speed * delta));
+			}
+
+			map0 = new TileMap();
+			FPS = 0;
+			currentFrames = 0;
+			lastFPS = Date.now();
+
+			main();
+		}
+
+		function render()
+		{
+			ctx.fillStyle="rgb(0, 0, 0)";
+			map0.render();
+			ctx.strokeStyle = "white";
+
+			for (var y = 0; y < map0.data.length; y++) {
+				var rectWidth = map0.rectWidth(y);
+				for (var x = 0; x < map0.data[y].length; x++) {
+					if (map0.get(x, y) != 0)
+					{
+						map0.getBoundingBox(x, y).draw();
+					}
+				}
+			}
+			santa.render();
+			santa2.render();
+			ctx.strokeStyle = "#666";
+			santa.boundingBox.draw();
+			santa2.boundingBox.draw();
+		}
+
+		function update()
+		{
+			currentFrames++;
+			if (Date.now() - lastFPS > 1000) {
+				FPS = currentFrames;
+				currentFrames = 0;
+				lastFPS = Date.now();
+			}
+			log("FPS: " + FPS);
+			ctx.fillStyle = "white";
+			santa.update();
+			santa2.update();
+		}
+
+		function main() {
+			now = Date.now();
+			delta = (now - lastTime) / 1000;
+
+			ctx.fillStyle="rgb(0, 0, 0)"; //CLEAR COLOR
+			ctx.fillRect(0, 0, canvas.width, canvas.height); // CLEAR SCREEN
+
+			checkInput();
+			update();
+			render();
+
+			debugInfo.innerHTML = debugData.join("<br> <b>-></b> ");
+			debugData = ["<b>Debug info:</b>"];
+
+			primaryCtx.drawImage(canvas, 0, 0); //SWAP BUFFERS
+
+			lastTime = now;
+			requestAnimFrame(main);
+		}
+
+
+	</script>
+
+</body>
+</html>
