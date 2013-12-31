@@ -346,7 +346,9 @@
 				this.sprite.render(0, 0, this.width, this.height, spriteCanvasContext);
 
 				var center = new vec2(this.width/2 * widthUnit, this.height/2 * heightUnit);
-				var img = spriteCanvasContext.getImageData(0, 0, spriteCanvasContext.width, spriteCanvasContext.height);
+				var img;
+				img.crossOrigin = 'anonymous';
+				img = spriteCanvasContext.getImageData(0, 0, spriteCanvasContext.width, spriteCanvasContext.height);
 
 				var x1 = center.x;
 				var y1 = center.y;
