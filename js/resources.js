@@ -21,6 +21,7 @@
         }
         else {
             var img = new Image();
+            img.crossOrigin = 'anonymous';
             img.onload = function() {
                 resourceCache[url] = img;
                 
